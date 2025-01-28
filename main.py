@@ -1,8 +1,6 @@
-import mysql.connector
-from tkinter import *
 import tkinter as tk
 from tkinter import messagebox
-
+import mysql.connector
 
 # Database connection
 db = mysql.connector.connect(
@@ -14,405 +12,265 @@ db = mysql.connector.connect(
 cursor = db.cursor()
 
 
-current_user_id = None
+class BusTicketApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Bus Ticket Management System")
+        self.root.geometry("600x500")
+        
+        # Set a global theme for the app
+        self.bg_color = "#f4f4f4"
+        self.accent_color = "#4CAF50"
+        self.text_color = "#333"
+        
+        # Initialize the current frame to None
+        self.current_frame = None
 
-def view_buses():
-    def search_buses():
-        source = entry_source.get()
-        destination = entry_destination.get()
+        # Load the main menu
+        self.load_main_menu()
 
-        cursor.execute("SELECT * FROM Buses WHERE source = %s AND destination = %s", (source, destination))
-        buses = cursor.fetchall()
+        # Set the background color for the root window
+        self.root.configure(bg=self.bg_color)
 
-        if not buses:
-            messagebox.showinfo("Info", "No buses available for this route.")
-        else:
-            for bus in buses:
-                listbox_buses.insert(END, f"Bus ID: {bus[0]}, Name: {bus[1]}, Seats: {bus[4]}, Fare: {bus[5]}")
+    def load_main_menu(self):
+        self.switch_frame(MainMenuFrame)
 
-    def select_bus():
-        selected = listbox_buses.get(ACTIVE)
-        if not selected:
-            messagebox.showerror("Error", "Please select a bus!")
-        else:
-            bus_id = int(selected.split(",")[0].split(":")[1].strip())
-            book_seats(bus_id)
+    # Function to switch frames
+    def switch_frame(self, frame_class, *args):
+        if self.current_frame:
+            self.current_frame.pack_forget()
+        frame = frame_class(self, *args)
+        frame.pack(fill="both", expand=True)
+        self.current_frame = frame
 
-    # Bus search window
-    bus_window = Toplevel(root)
-    bus_window.title("View Buses")
-    bus_window.geometry("500x500")
+    # Login/Register Frame
+    def load_login(self):
+        self.switch_frame(LoginFrame)
 
-    Label(bus_window, text="Source", font=("Arial", 12)).pack(pady=5)
-    entry_source = Entry(bus_window, font=("Arial", 12), width=25)
-    entry_source.pack(pady=5)
+    def load_register(self):
+        self.switch_frame(RegisterFrame)
 
-    Label(bus_window, text="Destination", font=("Arial", 12)).pack(pady=5)
-    entry_destination = Entry(bus_window, font=("Arial", 12), width=25)
-    entry_destination.pack(pady=5)
+    # Source-Destination Selection Frame
+    def load_source_destination(self):
+        self.switch_frame(SourceDestinationFrame)
 
-    Button(
-        bus_window,
-        text="Search Buses",
-        command=search_buses,
-        font=("Arial", 12),
-        bg="#28a745",
-        fg="white",
-        activebackground="#218838",
-        activeforeground="white",
-        width=15,
-        height=2
-    ).pack(pady=10)
+    # Bus Selection Frame
+    def load_bus_selection(self, source, destination):
+        self.switch_frame(BusSelectionFrame, source, destination)
 
-    # Initialize listbox_buses here
-    listbox_buses = Listbox(bus_window, font=("Arial", 12), width=40, height=10)
-    listbox_buses.pack(fill=BOTH, expand=True)
+    # Seat Matrix Frame
+    def load_seat_matrix(self, bus_id, source, destination):
+        self.switch_frame(SeatMatrixFrame, bus_id, source, destination)
 
-    Button(
-        bus_window,
-        text="Select Bus",
-        command=select_bus,
-        font=("Arial", 12),
-        bg="#007BFF",
-        fg="white",
-        activebackground="#0056b3",
-        activeforeground="white",
-        width=15,
-        height=2
-    ).pack(pady=10)
+    # Booking Details Frame
+    def load_booking_details(self, seat_id, bus_id, source, destination):
+        self.switch_frame(BookingDetailsFrame, seat_id, bus_id, source, destination)
 
-    
-def register_user():
-    def submit_registration():
-        username = entry_username.get()
-        password = entry_password.get()
-        email = entry_email.get()
-        phone = entry_phone.get()
-
-        if not username or not password or not email or not phone:
-            messagebox.showerror("Error", "All fields are required!")
-            return
-
-        try:
-            # Insert user into the database
-            cursor.execute(
-                "INSERT INTO Users (username, password, email, phone) VALUES (%s, %s, %s, %s)",
-                (username, password, email, phone)
-            )
-            db.commit()
-            messagebox.showinfo("Success", "Registration successful! Please log in.")
-            register_window.destroy()  # Close the registration window
-            login_user()  # Redirect to login screen
-        except Exception as e:
-            messagebox.showerror("Error", f"Registration failed: {e}")
-
-    # Registration window
-    register_window = Toplevel(root)
-    register_window.title("Register")
-    register_window.geometry("500x500")
-
-    Label(register_window, text="Register", font=("Arial", 16, "bold")).pack(pady=20)
-
-    Label(register_window, text="Username", font=("Arial", 12)).pack(pady=5)
-    entry_username = Entry(register_window, font=("Arial", 12), width=25)
-    entry_username.pack(pady=5)
-
-    Label(register_window, text="Password", font=("Arial", 12)).pack(pady=5)
-    entry_password = Entry(register_window, font=("Arial", 12), width=25, show="*")
-    entry_password.pack(pady=5)
-
-    Label(register_window, text="Email", font=("Arial", 12)).pack(pady=5)
-    entry_email = Entry(register_window, font=("Arial", 12), width=25)
-    entry_email.pack(pady=5)
-
-    Label(register_window, text="Phone", font=("Arial", 12)).pack(pady=5)
-    entry_phone = Entry(register_window, font=("Arial", 12), width=25)
-    entry_phone.pack(pady=5)
-
-    Button(
-        register_window,
-        text="Register",
-        command=submit_registration,
-        font=("Arial", 12),
-        bg="#007BFF",
-        fg="white",
-        activebackground="#0056b3",
-        activeforeground="white",
-        width=15,
-        height=2
-    ).pack(pady=20)
+    # Exit Application
+    def exit_app(self):
+        self.root.quit()
 
 
-def login_user():
-    def submit_login():
-        username = entry_username.get()
-        password = entry_password.get()
+# Main Menu Frame
+class MainMenuFrame(tk.Frame):
+    def __init__(self, app):
+        super().__init__(app.root, bg=app.bg_color)
+        self.app = app
 
-        cursor.execute("SELECT * FROM Users WHERE username = %s AND password = %s", (username, password))
-        user = cursor.fetchone()
+        tk.Label(self, text="Bus Ticket Management System", font=("Arial", 20, "bold"), bg=app.bg_color, fg=app.text_color).pack(pady=30)
+        tk.Button(self, text="Login", command=self.app.load_login, bg=app.accent_color, fg="white", width=30, height=2).pack(pady=10)
+        tk.Button(self, text="Register", command=self.app.load_register, bg="#2196F3", fg="white", width=30, height=2).pack(pady=10)
+        tk.Button(self, text="Exit", command=self.app.exit_app, bg="red", fg="white", width=30, height=2).pack(pady=10)
 
-        if user:
-            global current_user_id
-            current_user_id = user[0]
-            messagebox.showinfo("Success", "Login successful!")
-            login_window.destroy()  # Close login window
-            main_menu()  # Open main menu after login
+
+# Login Frame
+class LoginFrame(tk.Frame):
+    def __init__(self, app):
+        super().__init__(app.root, bg=app.bg_color)
+        self.app = app
+
+        tk.Label(self, text="Login", font=("Arial", 18, "bold"), bg=app.bg_color, fg=app.text_color).pack(pady=20)
+
+        self.username_var = tk.StringVar()
+        self.password_var = tk.StringVar()
+
+        tk.Label(self, text="Username:", bg=app.bg_color, fg=app.text_color).pack(pady=5)
+        tk.Entry(self, textvariable=self.username_var, font=("Arial", 14)).pack(pady=5)
+
+        tk.Label(self, text="Password:", bg=app.bg_color, fg=app.text_color).pack(pady=5)
+        tk.Entry(self, textvariable=self.password_var, show="*", font=("Arial", 14)).pack(pady=5)
+
+        tk.Button(self, text="Login", command=self.login_user, bg=app.accent_color, fg="white", width=15, height=1).pack(pady=10)
+        tk.Button(self, text="Back", command=self.app.load_main_menu, bg="gray", fg="white", width=15, height=1).pack(pady=10)
+
+    def login_user(self):
+        username = self.username_var.get()
+        password = self.password_var.get()
+        cursor.execute("SELECT * FROM users WHERE username=%s AND password=%s", (username, password))
+        result = cursor.fetchone()
+        if result:
+            messagebox.showinfo("Success", "Login Successful!")
+            self.app.load_source_destination()
         else:
             messagebox.showerror("Error", "Invalid credentials!")
 
-    # Login window
-    login_window = Toplevel(root)
-    login_window.title("Login")
-    login_window.geometry("500x500")
 
-    Label(login_window, text="Login", font=("Arial", 16, "bold")).pack(pady=20)
+# Register User Frame
+class RegisterFrame(tk.Frame):
+    def __init__(self, app):
+        super().__init__(app.root, bg=app.bg_color)
+        self.app = app
 
-    Label(login_window, text="Username", font=("Arial", 12)).pack(pady=5)
-    entry_username = Entry(login_window, font=("Arial", 12), width=25)
-    entry_username.pack(pady=5)
+        tk.Label(self, text="Register New User", font=("Arial", 18, "bold"), bg=app.bg_color, fg=app.text_color).pack(pady=20)
 
-    Label(login_window, text="Password", font=("Arial", 12)).pack(pady=5)
-    entry_password = Entry(login_window, font=("Arial", 12), width=25, show="*")
-    entry_password.pack(pady=5)
+        self.name_var = tk.StringVar()
+        self.email_var = tk.StringVar()
+        self.phone_var = tk.StringVar()
+        self.username_var = tk.StringVar()
+        self.password_var = tk.StringVar()
 
-    Button(
-        login_window,
-        text="Login",
-        command=submit_login,
-        font=("Arial", 12),
-        bg="#007BFF",
-        fg="white",
-        activebackground="#0056b3",
-        activeforeground="white",
-        width=15,
-        height=2
-    ).pack(pady=20)
-    
-def select_bus():
-    selected = listbox_buses.get(ACTIVE)
-    if not selected:
-        messagebox.showerror("Error", "Please select a bus!")
-    else:
-        bus_id = int(selected.split(",")[0].split(":")[1].strip())
-        book_seats(bus_id)
-def get_fare(bus_id):
-    cursor.execute("SELECT fare FROM Buses WHERE bus_id = %s", (bus_id,))
-    fare = cursor.fetchone()
-    if fare:
-        return fare[0]
-    return 0  # Default fare if not found
+        tk.Label(self, text="Name:", bg=app.bg_color, fg=app.text_color).pack(pady=5)
+        tk.Entry(self, textvariable=self.name_var, font=("Arial", 14)).pack(pady=5)
 
-def book_seats(bus_id):
-    # Fetch seat data from database
-    cursor.execute("SELECT seat_number, is_booked FROM Seats WHERE bus_id = %s", (bus_id,))
-    seat_data = cursor.fetchall()
+        tk.Label(self, text="Email:", bg=app.bg_color, fg=app.text_color).pack(pady=5)
+        tk.Entry(self, textvariable=self.email_var, font=("Arial", 14)).pack(pady=5)
 
-    # Get the total number of seats
-    total_seats = len(seat_data)
-    
-    # Assuming a fixed number of columns (e.g., 4), calculate rows
-    cols = 4
-    rows = total_seats // cols
-    if total_seats % cols != 0:
-        rows += 1  
-    
-    # Initialize seat matrix and availability dictionary
-    seat_matrix = [[None for _ in range(cols)] for _ in range(rows)]
-    seat_availability = {} 
+        tk.Label(self, text="Phone Number:", bg=app.bg_color, fg=app.text_color).pack(pady=5)
+        tk.Entry(self, textvariable=self.phone_var, font=("Arial", 14)).pack(pady=5)
 
-    
-    for seat in seat_data:
-        seat_number, is_booked = seat
-        row = (seat_number - 1) // cols  
-        col = (seat_number - 1) % cols   
-        
-       
-        seat_matrix[row][col] = seat_number
-        seat_availability[seat_number] = is_booked
-    
-    # Create booking window
-    booking_window = tk.Toplevel(root)
-    booking_window.title("Book Seats")
-    booking_window.geometry("500x500")
-    
-    # Function to handle seat selection
-    def select_seat(seat_number):
-        if seat_availability[seat_number]:
-            messagebox.showerror("Error", f"Seat {seat_number} is already booked!")
+        tk.Label(self, text="Username:", bg=app.bg_color, fg=app.text_color).pack(pady=5)
+        tk.Entry(self, textvariable=self.username_var, font=("Arial", 14)).pack(pady=5)
+
+        tk.Label(self, text="Password:", bg=app.bg_color, fg=app.text_color).pack(pady=5)
+        tk.Entry(self, textvariable=self.password_var, show="*", font=("Arial", 14)).pack(pady=5)
+
+        tk.Button(self, text="Register", command=self.register_user, bg=app.accent_color, fg="white", width=15, height=1).pack(pady=10)
+        tk.Button(self, text="Back", command=self.app.load_main_menu, bg="gray", fg="white", width=15, height=1).pack(pady=10)
+
+    def register_user(self):
+        name = self.name_var.get()
+        email = self.email_var.get()
+        phone = self.phone_var.get()
+        username = self.username_var.get()
+        password = self.password_var.get()
+
+        if name and email and phone and username and password:
+            try:
+                cursor.execute("INSERT INTO users (name, email, phone, username, password) VALUES (%s, %s, %s, %s, %s)",
+                               (name, email, phone, username, password))
+                db.commit()
+                messagebox.showinfo("Success", "Registration Successful!")
+                self.app.load_login()
+            except mysql.connector.Error as err:
+                messagebox.showerror("Error", f"Database error: {err}")
         else:
-            # Book the seat and update database
-            cursor.execute("UPDATE Seats SET is_booked = TRUE WHERE bus_id = %s AND seat_number = %s",
-                           (bus_id, seat_number))
-            db.commit()
-            messagebox.showinfo("Success", f"Seat {seat_number} has been booked successfully!")
-            # Update seat button color
-            seat_buttons[seat_number].config(bg="red")
-            seat_availability[seat_number] = True
-
-    # Create a grid of buttons to represent the seat matrix
-    seat_buttons = {}
-    for i in range(rows):
-        for j in range(cols):
-            seat_number = seat_matrix[i][j]
-            if seat_number:
-                if seat_availability[seat_number]:
-                    color = "red"  # Booked seat color
-                else:
-                    color = "green"  # Available seat color
-                button = tk.Button(
-                    booking_window,
-                    text=f"Seat {seat_number}",
-                    width=10,
-                    height=2,
-                    bg=color,
-                    command=lambda seat_number=seat_number: select_seat(seat_number)
-                )
-                button.grid(row=i, column=j, padx=5, pady=5)
-                seat_buttons[seat_number] = button
-
-    # Add a button to confirm booking and show total fare
-    def confirm_booking():
-        booked_seats = [seat for seat, booked in seat_availability.items() if booked]
-        total_fare = len(booked_seats) * get_fare(bus_id)  # Calculate total fare based on number of seats
-        messagebox.showinfo("Booking Confirmed", f"Total Fare: {total_fare}")
-        booking_window.destroy()
-
-    confirm_button = tk.Button(
-        booking_window,
-        text="Confirm Booking",
-        font=("Arial", 12),
-        bg="#007BFF",
-        fg="white",
-        activebackground="#0056b3",
-        activeforeground="white",
-        command=confirm_booking
-    )
-    confirm_button.grid(row=rows, column=0, columnspan=cols, pady=20)
+            messagebox.showerror("Error", "Please enter all fields!")
 
 
+# Source-Destination Frame
+class SourceDestinationFrame(tk.Frame):
+    def __init__(self, app):
+        super().__init__(app.root, bg=app.bg_color)
+        self.app = app
 
-def main_menu():
-    def view_buses():
-        def search_buses():
-            source = entry_source.get()
-            destination = entry_destination.get()
+        tk.Label(self, text="Select Source and Destination", font=("Arial", 16, "bold"), bg=app.bg_color, fg=app.text_color).pack(pady=20)
 
-            cursor.execute("SELECT * FROM Buses WHERE source = %s AND destination = %s", (source, destination))
-            buses = cursor.fetchall()
+        self.source_var = tk.StringVar()
+        self.destination_var = tk.StringVar()
 
-            if not buses:
-                messagebox.showinfo("Info", "No buses available for this route.")
-            else:
-                for bus in buses:
-                    listbox_buses.insert(END, f"Bus ID: {bus[0]}, Name: {bus[1]}, Seats: {bus[4]}, Fare: {bus[5]}")
+        tk.Label(self, text="Source:", bg=app.bg_color, fg=app.text_color).pack(pady=5)
+        tk.Entry(self, textvariable=self.source_var, font=("Arial", 14)).pack(pady=5)
 
-        def select_bus():
-            selected = listbox_buses.get(ACTIVE)
-            if not selected:
-                messagebox.showerror("Error", "Please select a bus!")
-            else:
-                bus_id = int(selected.split(",")[0].split(":")[1].strip())
-                book_seats(bus_id)
+        tk.Label(self, text="Destination:", bg=app.bg_color, fg=app.text_color).pack(pady=5)
+        tk.Entry(self, textvariable=self.destination_var, font=("Arial", 14)).pack(pady=5)
 
-        # Bus search window
-        bus_window = Toplevel(root)
-        bus_window.title("View Buses")
-        bus_window.geometry("500x500")
+        tk.Button(self, text="Search Buses", command=self.search_buses, bg=app.accent_color, fg="white", width=15, height=1).pack(pady=10)
+        tk.Button(self, text="Back", command=self.app.load_main_menu, bg="gray", fg="white", width=15, height=1).pack(pady=10)
 
-        Label(bus_window, text="Source", font=("Arial", 12)).pack(pady=5)
-        entry_source = Entry(bus_window, font=("Arial", 12), width=25)
-        entry_source.pack(pady=5)
-
-        Label(bus_window, text="Destination", font=("Arial", 12)).pack(pady=5)
-        entry_destination = Entry(bus_window, font=("Arial", 12), width=25)
-        entry_destination.pack(pady=5)
-
-        Button(
-            bus_window,
-            text="Search Buses",
-            command=search_buses,
-            font=("Arial", 12),
-            bg="#28a745",
-            fg="white",
-            activebackground="#218838",
-            activeforeground="white",
-            width=15,
-            height=2
-        ).pack(pady=10)
-
-        listbox_buses = Listbox(bus_window, font=("Arial", 12), width=40, height=10)
-        listbox_buses.pack(fill=BOTH, expand=True)
-
-        Button(
-            bus_window,
-            text="Select Bus",
-            command=select_bus,
-            font=("Arial", 12),
-            bg="#007BFF",
-            fg="white",
-            activebackground="#0056b3",
-            activeforeground="white",
-            width=15,
-            height=2
-        ).pack(pady=10)
-
-    # Main Menu window
-    main_menu_window = Toplevel(root)
-    main_menu_window.title("Main Menu")
-    main_menu_window.geometry("500x500")
-
-    Label(main_menu_window, text="Welcome!", font=("Arial", 16, "bold")).pack(pady=20)
-
-    Button(
-        main_menu_window,
-        text="View Buses",
-        command=view_buses,
-        font=("Arial", 12),
-        bg="#007BFF",
-        fg="white",
-        activebackground="#0056b3",
-        activeforeground="white",
-        width=15,
-        height=2
-    ).pack(pady=20)
-
-    Button(
-        main_menu_window,
-        text="Logout",
-        command=main_menu_window.destroy,
-        font=("Arial", 12),
-        bg="#dc3545",
-        fg="white",
-        activebackground="#c82333",
-        activeforeground="white",
-        width=15,
-        height=2
-    ).pack(pady=10)
-
-def logout(menu_window):
-    global current_user_id
-    current_user_id = None  # Clear the current user ID
-    menu_window.destroy()
-    messagebox.showinfo("Logout", "You have successfully logged out.")
+    def search_buses(self):
+        source = self.source_var.get()
+        destination = self.destination_var.get()
+        if source and destination:
+            self.app.load_bus_selection(source, destination)
+        else:
+            messagebox.showerror("Error", "Please enter both source and destination!")
 
 
-# Main Window
-root = Tk()
-root.title("Bus Ticket Management System")
-root.geometry("500x500")
+# Bus Selection Frame
+class BusSelectionFrame(tk.Frame):
+    def __init__(self, app, source, destination):
+        super().__init__(app.root, bg=app.bg_color)
+        self.app = app
+        self.source = source
+        self.destination = destination
 
-Label(root, text="Bus Ticket Management System", font=("Arial", 16, "bold")).pack(pady=20)
+        tk.Label(self, text=f"Buses from {source} to {destination}", font=("Arial", 16, "bold"), bg=app.bg_color, fg=app.text_color).pack(pady=20)
 
-Button(root, text="Register", command=register_user,
-       font=("Arial", 12, "bold"), bg="#007BFF", fg="white", activebackground="#0056b3",
-       activeforeground="white", width=15, height=2).pack(pady=10)
+        cursor.execute("SELECT * FROM buses WHERE source=%s AND destination=%s", (source, destination))
+        buses = cursor.fetchall()
 
-Button(root, text="Login", command=login_user,
-       font=("Arial", 12, "bold"), bg="#28a745", fg="white", activebackground="#218838",
-       activeforeground="white", width=15, height=2).pack(pady=10)
+        self.bus_buttons = []
+        for bus in buses:
+            bus_id, bus_name = bus[0], bus[1]
+            bus_button = tk.Button(self, text=bus_name, command=lambda bus_id=bus_id: self.app.load_seat_matrix(bus_id, source, destination),
+                                   bg=app.accent_color, fg="white", width=30, height=2)
+            bus_button.pack(pady=10)
+            self.bus_buttons.append(bus_button)
 
-Button(root, text="Exit", command=root.destroy,
-       font=("Arial", 12, "bold"), bg="#dc3545", fg="white", activebackground="#c82333",
-       activeforeground="white", width=15, height=2).pack(pady=10)
+        tk.Button(self, text="Back", command=self.app.load_source_destination, bg="gray", fg="white", width=15, height=1).pack(pady=10)
 
-root.mainloop()
+
+
+class SeatMatrixFrame(tk.Frame):
+    def __init__(self, app, bus_id, source, destination):
+        super().__init__(app.root, bg=app.bg_color)
+        self.app = app
+        self.bus_id = bus_id
+        self.source = source
+        self.destination = destination
+
+        tk.Label(self, text="Enter Seat Number to Book", font=("Arial", 16, "bold"), bg=app.bg_color, fg=app.text_color).pack(pady=20)
+
+        # Entry field for seat number
+        self.seat_entry_label = tk.Label(self, text="Seat Number:", font=("Arial", 14), bg=app.bg_color, fg=app.text_color)
+        self.seat_entry_label.pack(pady=5)
+        self.seat_entry = tk.Entry(self, font=("Arial", 12))
+        self.seat_entry.pack(pady=5)
+
+        # Book button to confirm booking
+        self.book_button = tk.Button(self, text="Check Availability & Book", command=self.check_and_book_seat, bg=app.accent_color, fg="white", width=20, height=1)
+        self.book_button.pack(pady=10)
+
+        # Back button to go back to bus selection
+        tk.Button(self, text="Back", command=lambda: self.app.load_bus_selection(self.source, self.destination), bg="gray", fg="white", width=15, height=1).pack(pady=10)
+
+    def check_and_book_seat(self):
+        seat_number = self.seat_entry.get()
+
+        if not seat_number:
+            tk.messagebox.showwarning("Input Error", "Please enter a seat number.")
+            return
+
+        # Fetch seat details based on the seat number
+        cursor.execute("SELECT seat_id, is_booked FROM Seats WHERE bus_id = %s AND seat_number = %s", (self.bus_id, seat_number))
+        seat = cursor.fetchone()
+
+        if not seat:
+            tk.messagebox.showwarning("Invalid Seat", f"Seat {seat_number} does not exist on this bus.")
+            return
+
+        seat_id, is_booked = seat
+
+        if is_booked == 'Booked':
+            tk.messagebox.showwarning("Seat Already Booked", f"Seat {seat_number} is already booked.")
+        else:
+            # Proceed with booking the seat
+            cursor.execute("UPDATE Seats SET is_booked = 'Booked' WHERE seat_id = %s", (seat_id,))
+            cursor.connection.commit()  # Commit the transaction to the database
+            tk.messagebox.showinfo("Booking Successful", f"Seat {seat_number} has been successfully booked.")
+            self.app.load_booking_details(seat_id, self.bus_id, self.source, self.destination)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = BusTicketApp(root)
+    root.mainloop()
