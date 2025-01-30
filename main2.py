@@ -462,25 +462,60 @@ class BusTicketApp:
                                 relief="raised", padx=10, pady=5, command=self.confirm_delete)
         delete_button.pack(pady=15, ipadx=10)
 
-
     def confirm_delete(self):
-        # Get the selected bus from the listbox
-        selected_bus = self.bus_listbox.get(tk.ACTIVE)
-        bus_id = int(selected_bus.split(',')[0].split(':')[1].strip())
+        try:
+            # Get the selected bus from the listbox
+            selected_bus = self.bus_listbox.get(tk.ACTIVE)
+            print(f"Selected Bus: '{selected_bus}'")  # Show the full selected string for debugging
 
-        # Database connection
-        connection = db_connection()
-        cursor = connection.cursor()
+            # Try to extract the bus_id based on multiple possible formats
+            bus_id_str = ""
+            if "ID:" in selected_bus:
+                # Format like "ID: 16 - Bus Name"
+                bus_id_str = selected_bus.split('ID:')[1].split()[0].strip()  # Get the number after "ID:"
+            elif " - " in selected_bus:
+                # Format like "16 - Bus Name"
+                bus_id_str = selected_bus.split(' - ')[0].strip()  # Get the number before the dash
+            else:
+                raise ValueError(f"Invalid bus format: {selected_bus}")
 
-        # Delete bus from the buses table
-        cursor.execute("DELETE FROM buses WHERE bus_id = %s", (bus_id,))
-        connection.commit()
-        connection.close()
+            print(f"Extracted bus_id string: '{bus_id_str}'")  # Debugging line
 
-        # Show success message
-        messagebox.showinfo("Success", "Bus deleted successfully.")
-        self.delete_bus_window.destroy()  # Close the delete bus window
-        self.show_admin_dashboard()  # Refresh admin dashboard or bus list
+            # Ensure the bus_id_str is a valid number before trying to convert it
+            if not bus_id_str.isdigit():
+                raise ValueError(f"Invalid bus_id format: '{bus_id_str}'")
+
+            # Convert the bus_id to an integer
+            bus_id = int(bus_id_str)
+            print(f"Converted bus_id: {bus_id}")  # Debugging line
+
+            # Database connection
+            connection = db_connection()
+            cursor = connection.cursor()
+
+            # Delete bus from the buses table
+            cursor.execute("DELETE FROM buses WHERE bus_id = %s", (bus_id,))
+            connection.commit()
+
+            # Check if any rows were affected
+            if cursor.rowcount > 0:
+                messagebox.showinfo("Success", "Bus deleted successfully.")
+            else:
+                messagebox.showwarning("No Rows Affected", "No bus found with the given ID.")
+
+            # Close the connection
+            connection.close()
+
+            # Close the delete window and refresh the dashboard
+            self.delete_bus_window.destroy()
+            self.show_admin_dashboard()
+
+        except Exception as e:
+        # Display any error that occurred
+            messagebox.showerror("Error", f"An error occurred: {e}")
+
+
+
 
 
     def modify_bus(self):
