@@ -1,69 +1,40 @@
--- Users Table
-CREATE TABLE Users (
-    user_id INT PRIMARY KEY AUTO_INCREMENT,
-    username VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    phone VARCHAR(20) NOT NULL
+CREATE TABLE bookings_details (
+  detail_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  booking_id INT NOT NULL,
+  seat_number INT NOT NULL,
+  fare DECIMAL(10,2) NOT NULL,
+  FOREIGN KEY (booking_id) REFERENCES bookings(booking_id)
 );
 
--- Buses Table
-CREATE TABLE Buses (
-    bus_id INT PRIMARY KEY AUTO_INCREMENT,
-    bus_name VARCHAR(255) NOT NULL,
-    source VARCHAR(255) NOT NULL,
-    destination VARCHAR(255) NOT NULL,
-    total_seats INT NOT NULL,
-    fare_per_seat FLOAT NOT NULL
+CREATE TABLE bookings (
+  booking_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  bus_id INT NOT NULL,
+  total_amount DECIMAL(10,2) NOT NULL,
+  booking_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(user_id),
+  FOREIGN KEY (bus_id) REFERENCES buses(bus_id)
 );
 
--- Bookings Table
-CREATE TABLE Bookings (
-    booking_id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT,
-    bus_id INT,
-    booking_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    total_amount FLOAT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES Users(user_id),
-    FOREIGN KEY (bus_id) REFERENCES Buses(bus_id)
+CREATE TABLE buses (
+  bus_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  bus_name VARCHAR(100) NOT NULL,
+  source VARCHAR(50) NOT NULL,
+  destination VARCHAR(50) NOT NULL,
+  total_seats INT NOT NULL,
+  fare_per_seat DECIMAL(10,2) NOT NULL
 );
 
--- BookingDetails Table
-CREATE TABLE BookingDetails (
-    detail_id INT PRIMARY KEY AUTO_INCREMENT,
-    booking_id INT,
-    seat_number INT NOT NULL,
-    fare FLOAT NOT NULL,
-    FOREIGN KEY (booking_id) REFERENCES Bookings(booking_id)
+CREATE TABLE seats (
+  seat_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  bus_id INT NOT NULL,
+  seat_number INT NOT NULL,
+  is_booked TINYINT(1) DEFAULT 0,
+  FOREIGN KEY (bus_id) REFERENCES buses(bus_id)
 );
-
--- User_Bus_Details Table (Denormalized summary)
-CREATE TABLE User_Bus_Details (
-    user_bus_id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT,
-    bus_id INT,
-    source VARCHAR(255) NOT NULL,
-    destination VARCHAR(255) NOT NULL,
-    seats_booked INT NOT NULL,
-    total_amount FLOAT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES Users(user_id),
-    FOREIGN KEY (bus_id) REFERENCES Buses(bus_id)
-);
-
--- Admin Table for managing administrative privileges
-CREATE TABLE Admins (
-    admin_id INT PRIMARY KEY AUTO_INCREMENT,
-    username VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL
-);
-CREATE TABLE  user_booking_{user_id} (
-    booking_id INT NOT NULL,
-    bus_id INT NOT NULL,
-    bus_name VARCHAR(255) NOT NULL,
-    source VARCHAR(255) NOT NULL,
-    destination VARCHAR(255) NOT NULL,
-    booking_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (booking_id),
-    FOREIGN KEY (bus_id) REFERENCES Buses(bus_id)
+CREATE TABLE admins (
+  admin_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  password VARCHAR(100) NOT NULL,
+  email VARCHAR(100) NOT NULL UNIQUE
 );
