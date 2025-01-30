@@ -3,7 +3,7 @@ from tkinter import messagebox
 import mysql.connector
 from datetime import datetime
 
-# Connect to MySQL Database
+
 def db_connection():
     return mysql.connector.connect(
         host="localhost",
@@ -12,11 +12,10 @@ def db_connection():
         database="dbmsproject2"  # Database name
     )
 
-# Initialize Main Application Window
 class BusTicketApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Bus Ticket Management System")
+        self.root.title("Bus Booking System")
         self.root.geometry("700x500")
         self.current_page = None
         self.user_id = None
@@ -29,7 +28,7 @@ class BusTicketApp:
     def show_login_or_register_page(self):
         self.clear_page()
         # Title label with a larger font, bold style, and a color
-        login_label = tk.Label(self.root, text="Bus ticket Booking System", font=("Arial", 24, "bold"), fg="#4CAF50")
+        login_label = tk.Label(self.root, text="Bus SBooking System", font=("Arial", 24, "bold"), fg="#4CAF50")
         login_label.pack(pady=20)
         login_label = tk.Label(self.root, text="Login to continue", font=("Arial", 12, "bold"), fg="#9CAF10")
         login_label.pack(pady=20)
@@ -60,23 +59,24 @@ class BusTicketApp:
         register_label = tk.Label(self.root, text="Register", font=("Arial", 20))
         register_label.pack(pady=10)
 
-        self.username_entry = tk.Entry(self.root, width=30)
+        self.username_entry = tk.Entry(self.root, width=30, font=("Arial", 14))
         self.username_entry.insert(0, "Username")
-        self.username_entry.pack(pady=5)
+        self.username_entry.pack(pady=5, ipady=5)
 
-        self.password_entry = tk.Entry(self.root, show="*", width=30)
+        self.password_entry = tk.Entry(self.root, show="*", width=30, font=("Arial", 14))
         self.password_entry.insert(0, "Password")
-        self.password_entry.pack(pady=5)
+        self.password_entry.pack(pady=5, ipady=5)
 
-        self.email_entry = tk.Entry(self.root, width=30)
+        self.email_entry = tk.Entry(self.root, width=30, font=("Arial", 14))
         self.email_entry.insert(0, "Email")
-        self.email_entry.pack(pady=5)
+        self.email_entry.pack(pady=5, ipady=5)
 
-        register_button = tk.Button(self.root, text="Register", command=self.create_account)
-        register_button.pack(pady=5)
+        register_button = tk.Button(self.root, text="Register", font=("Arial", 14, "bold"), bg="#4CAF50", fg="white", padx=10, pady=5, relief="raised", command=self.create_account)
+        register_button.pack(pady=10)
 
-        back_button = tk.Button(self.root, text="Back", command=self.show_login_or_register_page)
+        back_button = tk.Button(self.root, text="Back", font=("Arial", 14, "bold"), bg="#f44336", fg="white", padx=10, pady=5, relief="raised", command=self.show_login_or_register_page)
         back_button.pack(pady=5)
+
 
     def create_account(self):
         username = self.username_entry.get()
@@ -127,16 +127,16 @@ class BusTicketApp:
     def show_bus_search_page(self):
         self.clear_page()
 
-        search_label = tk.Label(self.root, text="Search Buses", font=("Arial", 20))
-        search_label.pack(pady=10)
+        search_label = tk.Label(self.root, text="Search Buses", font=("Arial", 22, "bold"), fg="#333")
+        search_label.pack(pady=15)
 
-        self.source_entry = tk.Entry(self.root, width=30)
+        self.source_entry = tk.Entry(self.root, width=30, font=("Arial", 14), fg="#555")
         self.source_entry.insert(0, "Source")
-        self.source_entry.pack(pady=5)
+        self.source_entry.pack(pady=5, ipady=5)
 
-        self.destination_entry = tk.Entry(self.root, width=30)
+        self.destination_entry = tk.Entry(self.root, width=30, font=("Arial", 14), fg="#555")
         self.destination_entry.insert(0, "Destination")
-        self.destination_entry.pack(pady=5)
+        self.destination_entry.pack(pady=5, ipady=5)
 
         search_button = tk.Button(self.root, text="Search", command=self.search_buses)
         search_button.pack(pady=10)
@@ -182,18 +182,29 @@ class BusTicketApp:
     def show_bus_selection_page(self, buses):
         self.clear_page()
 
-        bus_list_label = tk.Label(self.root, text="Select a Bus", font=("Arial", 20))
-        bus_list_label.pack(pady=10)
+        bus_list_label = tk.Label(self.root, text="Select a Bus", font=("Arial", 22, "bold"), fg="#333")
+        bus_list_label.pack(pady=15)
+
+        bus_frame = tk.Frame(self.root)
+        bus_frame.pack(pady=5)
 
         self.bus_buttons = []
         for bus in buses:
-            bus_info = f"{bus[1]} (Seats: {bus[2]}, Fare: {bus[3]})"
-            bus_button = tk.Button(self.root, text=bus_info, command=lambda bus_id=bus[0]: self.book_bus(bus_id))
-            bus_button.pack(pady=5)
+            bus_info = f"{bus[1]} | Seats: {bus[2]} | Fare: ₹{bus[3]}"
+            bus_button = tk.Button(
+                bus_frame, text=bus_info, font=("Arial", 14), fg="white", bg="#007BFF", 
+                activebackground="#0056b3", activeforeground="white", 
+                relief="raised", padx=10, pady=5,
+                command=lambda bus_id=bus[0]: self.book_bus(bus_id)
+            )
+            bus_button.pack(pady=5, fill="x", padx=20)
             self.bus_buttons.append(bus_button)
 
-        back_button = tk.Button(self.root, text="Back", command=self.show_bus_search_page)
-        back_button.pack(pady=10)
+        back_button = tk.Button(self.root, text="🔙 Back", font=("Arial", 14), fg="white", bg="#dc3545",
+                                activebackground="#a71d2a", activeforeground="white",
+                                relief="raised", padx=10, pady=5,
+                                command=self.show_bus_search_page)
+        back_button.pack(pady=15, ipadx=10)
 
     def book_bus(self, bus_id):
         connection = db_connection()
@@ -287,7 +298,7 @@ class BusTicketApp:
 
 
     def cancel_booking(self, booking_id):
-        """ Cancels the user's booking and releases the seats. """
+       
         connection = db_connection()
         cursor = connection.cursor()
 
@@ -339,71 +350,50 @@ class BusTicketApp:
         back_button = tk.Button(self.root, text="Back", command=self.show_login_or_register_page, font=("Arial", 14), 
                                 bg="#2196F3", fg="white", width=20, height=2, relief="solid", borderwidth=2)
         back_button.pack(pady=15)
-
-    def show_booking_history(self):
-        # Open a new window to show the booking history
-        self.booking_history_window = tk.Toplevel(self.root)
-        self.booking_history_window.title("User Booking History")
-
-        # Database connection
-        connection = db_connection()
-        cursor = connection.cursor()
-
-        # Get booking history from the user_booking_history table
-        cursor.execute("SELECT history_id, user_id, booking_date, bus_id, travel_date, travel_time FROM user_booking_history")
-        bookings = cursor.fetchall()
-        connection.close()
-
-        # Create a listbox to display booking history
-        booking_listbox = tk.Listbox(self.booking_history_window, width=80, height=15)
-        booking_listbox.pack(pady=10)
-
-        # Insert booking details into the listbox
-        for booking in bookings:
-            booking_details = f"History ID: {booking[0]}, User ID: {booking[1]}, Booking Date: {booking[2]}, Bus ID: {booking[3]}, Travel Date: {booking[4]}, Travel Time: {booking[5]}"
-            booking_listbox.insert(tk.END, booking_details)
-
-        # Close button for the window
-        close_button = tk.Button(self.booking_history_window, text="Close", command=self.booking_history_window.destroy, font=("Arial", 14))
-        close_button.pack(pady=5)
+        
     def add_bus(self):
     
         self.add_bus_window = tk.Toplevel(self.root)
         self.add_bus_window.title("Add New Bus")
+        self.add_bus_window.geometry("500x4500")
+        self.add_bus_window.configure(bg="#f4f4f4")
 
-        # Bus name
-        bus_name_label = tk.Label(self.add_bus_window, text="Bus Name:")
-        bus_name_label.pack(pady=5)
-        self.bus_name_entry = tk.Entry(self.add_bus_window, width=30)
-        self.bus_name_entry.pack(pady=5)
+        title_label = tk.Label(self.add_bus_window, text="🚌 Add New Bus", font=("Arial", 18, "bold"), fg="#333", bg="#f4f4f4")
+        title_label.pack(pady=15)
+
+        # Create a frame for inputs
+        form_frame = tk.Frame(self.add_bus_window, bg="#f4f4f4")
+        form_frame.pack(pady=5)
+
+        # Function to create styled labels and entries
+        def create_input_row(label_text):
+            label = tk.Label(form_frame, text=label_text, font=("Arial", 12), bg="#f4f4f4")
+            label.pack(anchor="w", pady=2)
+            entry = tk.Entry(form_frame, width=30, font=("Arial", 12), relief="solid", bd=1)
+            entry.pack(pady=5, ipady=3)
+            return entry
+
+        # Bus Name
+        self.bus_name_entry = create_input_row("🚌 Bus Name:")
 
         # Source
-        source_label = tk.Label(self.add_bus_window, text="Source:")
-        source_label.pack(pady=5)
-        self.source_entry = tk.Entry(self.add_bus_window, width=30)
-        self.source_entry.pack(pady=5)
+        self.source_entry = create_input_row("📍 Source:")
 
         # Destination
-        destination_label = tk.Label(self.add_bus_window, text="Destination:")
-        destination_label.pack(pady=5)
-        self.destination_entry = tk.Entry(self.add_bus_window, width=30)
-        self.destination_entry.pack(pady=5)
+        self.destination_entry = create_input_row("🚏 Destination:")
 
-        # Total seats
-        total_seats_label = tk.Label(self.add_bus_window, text="Total Seats:")
-        total_seats_label.pack(pady=5)
-        self.total_seats_entry = tk.Entry(self.add_bus_window, width=30)
-        self.total_seats_entry.pack(pady=5)
+        # Total Seats
+        self.total_seats_entry = create_input_row("💺 Total Seats:")
 
-        # Fare per seat
-        fare_label = tk.Label(self.add_bus_window, text="Fare per Seat:")
-        fare_label.pack(pady=5)
-        self.fare_entry = tk.Entry(self.add_bus_window, width=30)
-        self.fare_entry.pack(pady=5)
+        # Fare per Seat
+        self.fare_entry = create_input_row("💰 Fare per Seat:")
 
-        # Add Bus button
-        add_button = tk.Button(self.add_bus_window, text="Add Bus", command=self.save_bus)
-        add_button.pack(pady=5)
+        # Add Bus Button
+        add_button = tk.Button(self.add_bus_window, text="➕ Add Bus", font=("Arial", 14, "bold"), fg="white", bg="#28a745",
+                            activebackground="#218838", activeforeground="white",
+                            relief="raised", padx=10, pady=5, command=self.save_bus)
+        add_button.pack(pady=15, ipadx=10)
+
 
     def save_bus(self):
         # Get the input values from the fields
@@ -436,24 +426,42 @@ class BusTicketApp:
     def delete_bus(self):
     # Open a new window to select the bus to delete
         self.delete_bus_window = tk.Toplevel(self.root)
-        self.delete_bus_window.title("Delete Bus")
+        self.delete_bus_window.title("🗑️ Delete Bus")
+        self.delete_bus_window.geometry("500x500")
+        self.delete_bus_window.configure(bg="#f8f9fa")
 
-        # Get list of buses from the database
+        # Title Label
+        title_label = tk.Label(self.delete_bus_window, text="🚌 Delete a Bus", font=("Arial", 16, "bold"), fg="#dc3545", bg="#f8f9fa")
+        title_label.pack(pady=15)
+
+        # Fetch bus list from the database
         connection = db_connection()
         cursor = connection.cursor()
         cursor.execute("SELECT bus_id, bus_name FROM buses")
         buses = cursor.fetchall()
         connection.close()
 
-        # Create a listbox to show buses
-        self.bus_listbox = tk.Listbox(self.delete_bus_window, width=50, height=10)
-        for bus in buses:
-            self.bus_listbox.insert(tk.END, f"ID: {bus[0]}, {bus[1]}")
-        self.bus_listbox.pack(pady=5)
+        # Create a frame for the listbox
+        list_frame = tk.Frame(self.delete_bus_window, bg="#f8f9fa")
+        list_frame.pack(pady=5)
 
-        # Delete bus button
-        delete_button = tk.Button(self.delete_bus_window, text="Delete Selected Bus", command=self.confirm_delete)
-        delete_button.pack(pady=5)
+        # Styled Listbox for displaying buses
+        self.bus_listbox = tk.Listbox(list_frame, width=45, height=10, font=("Arial", 12), relief="solid", bd=1, fg="#333")
+        for bus in buses:
+            self.bus_listbox.insert(tk.END, f"ID: {bus[0]} - {bus[1]}")
+        self.bus_listbox.pack(side=tk.LEFT, padx=5)
+
+        # Add a scrollbar
+        scrollbar = tk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.bus_listbox.yview)
+        self.bus_listbox.config(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Delete Button with styling
+        delete_button = tk.Button(self.delete_bus_window, text="🗑️ Delete Selected Bus", font=("Arial", 12, "bold"),
+                                fg="white", bg="#dc3545", activebackground="#c82333", activeforeground="white",
+                                relief="raised", padx=10, pady=5, command=self.confirm_delete)
+        delete_button.pack(pady=15, ipadx=10)
+
 
     def confirm_delete(self):
         # Get the selected bus from the listbox
@@ -479,6 +487,7 @@ class BusTicketApp:
         # Open a new window to select the bus to modify
         self.modify_bus_window = tk.Toplevel(self.root)
         self.modify_bus_window.title("Modify Bus")
+        self.modify_bus_window.configure(bg="#f7f7f7")  # Light background color for the window
 
         # Get list of buses from the database
         connection = db_connection()
@@ -487,22 +496,27 @@ class BusTicketApp:
         buses = cursor.fetchall()
         connection.close()
 
+        # Create a frame to organize widgets
+        frame = tk.Frame(self.modify_bus_window, padx=20, pady=20, bg="#f7f7f7")
+        frame.pack(padx=10, pady=10)
+
         # Create a listbox to show buses
-        self.bus_listbox = tk.Listbox(self.modify_bus_window, width=50, height=10)
+        self.bus_listbox = tk.Listbox(frame, width=50, height=10, font=("Arial", 12), selectmode=tk.SINGLE)
         for bus in buses:
             self.bus_listbox.insert(tk.END, f"ID: {bus[0]}, {bus[1]}")
-        self.bus_listbox.pack(pady=5)
+        self.bus_listbox.pack(pady=10)
 
         # Modify button
-        modify_button = tk.Button(self.modify_bus_window, text="Modify Selected Bus", command=self.show_modify_fields)
-        modify_button.pack(pady=5)
+        modify_button = tk.Button(frame, text="Modify Selected Bus", command=self.show_modify_fields, 
+                                  font=("Arial", 12, "bold"), bg="#4CAF50", fg="white", relief="flat", width=20, height=2)
+        modify_button.pack(pady=10)
 
     def show_modify_fields(self):
-        # Get the selected bus from the listbox
+       
         selected_bus = self.bus_listbox.get(tk.ACTIVE)
         bus_id = int(selected_bus.split(',')[0].split(':')[1].strip())
 
-        # Open a window to modify bus details
+      
         self.modify_details_window = tk.Toplevel(self.root)
         self.modify_details_window.title("Modify Bus Details")
 

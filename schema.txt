@@ -6,7 +6,6 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
 CREATE TABLE bookings_details (
   detail_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   booking_id INT NOT NULL,
@@ -26,7 +25,7 @@ CREATE TABLE bookings (
 );
 
 CREATE TABLE buses (
-  bus_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  bus_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,  
   bus_name VARCHAR(100) NOT NULL,
   source VARCHAR(50) NOT NULL,
   destination VARCHAR(50) NOT NULL,
@@ -41,6 +40,7 @@ CREATE TABLE seats (
   is_booked TINYINT(1) DEFAULT 0,
   FOREIGN KEY (bus_id) REFERENCES buses(bus_id)
 );
+
 CREATE TABLE admins (
   admin_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(50) NOT NULL UNIQUE,
@@ -48,16 +48,6 @@ CREATE TABLE admins (
   email VARCHAR(100) NOT NULL UNIQUE
 );
 
-CREATE TABLE user_booking_history (
-    history_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    booking_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    bus_id INT NOT NULL,
-    travel_date DATE NOT NULL,
-    travel_time TIME NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(user_id),
-    FOREIGN KEY (bus_id) REFERENCES buses(bus_id)
-);
 
 Trigger for Deleting Seats when a Bus is Deleted
 sql
