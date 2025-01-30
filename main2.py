@@ -7,8 +7,8 @@ from datetime import datetime
 def db_connection():
     return mysql.connector.connect(
         host="localhost",
-        user="root",  # Your MySQL username
-        password="vivek24",  # Your MySQL password
+        user="root",  
+        password="vivek24",  
         database="dbmsproject2"  # Database name
     )
 
@@ -17,7 +17,7 @@ class BusTicketApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Bus Ticket Management System")
-        self.root.geometry("600x400")
+        self.root.geometry("700x500")
         self.current_page = None
         self.user_id = None
         self.admin_id = None
@@ -27,10 +27,12 @@ class BusTicketApp:
             widget.destroy()
 
     def show_login_or_register_page(self):
+        self.clear_page()
         # Title label with a larger font, bold style, and a color
-        login_label = tk.Label(self.root, text="Login / Register", font=("Arial", 24, "bold"), fg="#4CAF50")
+        login_label = tk.Label(self.root, text="Bus ticket Booking System", font=("Arial", 24, "bold"), fg="#4CAF50")
         login_label.pack(pady=20)
-
+        login_label = tk.Label(self.root, text="Login to continue", font=("Arial", 12, "bold"), fg="#9CAF10")
+        login_label.pack(pady=20)
         # Username entry with padding and a border color
         self.username_entry = tk.Entry(self.root, width=40, font=("Arial", 14))
         self.username_entry.insert(0, "Username")
@@ -139,6 +141,29 @@ class BusTicketApp:
         search_button = tk.Button(self.root, text="Search", command=self.search_buses)
         search_button.pack(pady=10)
 
+        profile_label = tk.Label(self.root, text="User Profile", font=("Arial", 20))
+        profile_label.pack(pady=10)
+
+        search_label = tk.Label(self.root, text="Your Booking history", font=("Arial", 20))
+        search_label.pack(pady=10)
+        connection = db_connection()
+        cursor = connection.cursor()
+        cursor.execute("SELECT booking_id, bus_id, total_amount, booking_date FROM bookings WHERE user_id = %s", (self.user_id,))
+        bookings = cursor.fetchall()
+
+        for booking in bookings:
+            booking_id, bus_id, amount, date = booking
+            booking_info = f"Booking ID: {booking_id}, Bus ID: {bus_id}, Amount: {amount}, Date: {date}"
+
+            frame = tk.Frame(self.root)
+            frame.pack(pady=5)
+
+            booking_label = tk.Label(frame, text=booking_info)
+            booking_label.pack(side=tk.LEFT, padx=10)
+
+            cancel_button = tk.Button(frame, text="Cancel Booking", bg="red", fg="white", command=lambda b_id=booking_id: self.cancel_booking(b_id))
+            cancel_button.pack(side=tk.RIGHT, padx=5)
+
         back_button = tk.Button(self.root, text="Back", command=self.show_login_or_register_page)
         back_button.pack(pady=5)
 
@@ -195,7 +220,7 @@ class BusTicketApp:
         back_button = tk.Button(self.root, text="Back", command=self.show_bus_selection_page)
         back_button.pack(pady=5)
 
-    def book_seats(self, bus_id, seat_numbers):
+    def book_seats(self, bus_id, username):
         selected_seats = list(map(int, self.seat_entry.get().split(',')))
         print(f"Selected seats: {selected_seats}")  # Debugging line
 
@@ -221,6 +246,7 @@ class BusTicketApp:
             # Update the seat booking status
             for seat in selected_seats:
                 cursor.execute("UPDATE seats SET is_booked = 1 WHERE bus_id = %s AND seat_number = %s", (bus_id, seat))
+                #cursor.execute("UPDATE seats SET is_booked_by = %s WHERE bus_id = %s AND seat_number = %s", (username, bus_id,seat))
                 cursor.execute("INSERT INTO bookings_details (booking_id, seat_number, fare) VALUES (%s, %s, %s)", (booking_id, seat, 100))
 
             connection.commit()
@@ -244,30 +270,104 @@ class BusTicketApp:
         bookings = cursor.fetchall()
 
         for booking in bookings:
-            booking_info = f"Booking ID: {booking[0]}, Bus ID: {booking[1]}, Amount: {booking[2]}, Date: {booking[3]}"
-            booking_label = tk.Label(self.root, text=booking_info)
-            booking_label.pack(pady=5)
+            booking_id, bus_id, amount, date = booking
+            booking_info = f"Booking ID: {booking_id}, Bus ID: {bus_id}, Amount: {amount}, Date: {date}"
+
+            frame = tk.Frame(self.root)
+            frame.pack(pady=5)
+
+            booking_label = tk.Label(frame, text=booking_info)
+            booking_label.pack(side=tk.LEFT, padx=10)
+
+            cancel_button = tk.Button(frame, text="Cancel Booking", bg="red", fg="white", command=lambda b_id=booking_id: self.cancel_booking(b_id))
+            cancel_button.pack(side=tk.RIGHT, padx=5)
 
         back_button = tk.Button(self.root, text="Back", command=self.show_bus_search_page)
-        back_button.pack(pady=5)
+        back_button.pack(pady=10)
+
+
+    def cancel_booking(self, booking_id):
+        """ Cancels the user's booking and releases the seats. """
+        connection = db_connection()
+        cursor = connection.cursor()
+
+        # Find seats booked for this booking
+        cursor.execute("SELECT seat_number FROM bookings_details WHERE booking_id = %s", (booking_id,))
+        booked_seats = cursor.fetchall()
+
+        # Release the seats
+        for seat in booked_seats:
+            seat_number = seat[0]
+            cursor.execute("UPDATE seats SET is_booked = 0 WHERE seat_number = %s", (seat_number,))
+
+        # Remove booking details first
+        cursor.execute("DELETE FROM bookings_details WHERE booking_id = %s", (booking_id,))
+
+        # Remove the booking
+        cursor.execute("DELETE FROM bookings WHERE booking_id = %s", (booking_id,))
+
+        connection.commit()
+        connection.close()
+
+        messagebox.showinfo("Booking Canceled", "Your booking has been successfully canceled.")
+
+        # Refresh the profile page
+        self.show_user_profile_page()
+
 
     def show_admin_dashboard(self):
-        self.clear_page()
 
+        self.clear_page()
         admin_dashboard_label = tk.Label(self.root, text="Admin Dashboard", font=("Arial", 20))
         admin_dashboard_label.pack(pady=10)
 
-        add_bus_button = tk.Button(self.root, text="Add Bus", command=self.add_bus)
-        add_bus_button.pack(pady=5)
+        
+        add_bus_button = tk.Button(self.root, text="Add Bus", command=self.add_bus, font=("Arial", 14), 
+                                    bg="#4CAF50", fg="white", width=20, height=2, relief="solid", borderwidth=2)
+        add_bus_button.pack(pady=10)
 
-        delete_bus_button = tk.Button(self.root, text="Delete Bus", command=self.delete_bus)
-        delete_bus_button.pack(pady=5)
+        # Delete Bus Button
+        delete_bus_button = tk.Button(self.root, text="Delete Bus", command=self.delete_bus, font=("Arial", 14), 
+                                    bg="#f44336", fg="white", width=20, height=2, relief="solid", borderwidth=2)
+        delete_bus_button.pack(pady=10)
 
-        modify_bus_button = tk.Button(self.root, text="Modify Bus", command=self.modify_bus)
-        modify_bus_button.pack(pady=5)
+        # Modify Bus Button
+        modify_bus_button = tk.Button(self.root, text="Modify", command=self.modify_bus, font=("Arial", 14), 
+                                    bg="#ff9800", fg="white", width=20, height=2, relief="solid", borderwidth=2)
+        modify_bus_button.pack(pady=10)
+    
+        back_button = tk.Button(self.root, text="Back", command=self.show_login_or_register_page, font=("Arial", 14), 
+                                bg="#2196F3", fg="white", width=20, height=2, relief="solid", borderwidth=2)
+        back_button.pack(pady=15)
 
+    def show_booking_history(self):
+        # Open a new window to show the booking history
+        self.booking_history_window = tk.Toplevel(self.root)
+        self.booking_history_window.title("User Booking History")
+
+        # Database connection
+        connection = db_connection()
+        cursor = connection.cursor()
+
+        # Get booking history from the user_booking_history table
+        cursor.execute("SELECT history_id, user_id, booking_date, bus_id, travel_date, travel_time FROM user_booking_history")
+        bookings = cursor.fetchall()
+        connection.close()
+
+        # Create a listbox to display booking history
+        booking_listbox = tk.Listbox(self.booking_history_window, width=80, height=15)
+        booking_listbox.pack(pady=10)
+
+        # Insert booking details into the listbox
+        for booking in bookings:
+            booking_details = f"History ID: {booking[0]}, User ID: {booking[1]}, Booking Date: {booking[2]}, Bus ID: {booking[3]}, Travel Date: {booking[4]}, Travel Time: {booking[5]}"
+            booking_listbox.insert(tk.END, booking_details)
+
+        # Close button for the window
+        close_button = tk.Button(self.booking_history_window, text="Close", command=self.booking_history_window.destroy, font=("Arial", 14))
+        close_button.pack(pady=5)
     def add_bus(self):
-    # Open a new window for adding bus details
+    
         self.add_bus_window = tk.Toplevel(self.root)
         self.add_bus_window.title("Add New Bus")
 
@@ -375,27 +475,27 @@ class BusTicketApp:
         self.show_admin_dashboard()  # Refresh admin dashboard or bus list
 
 
-        def modify_bus(self):
-            # Open a new window to select the bus to modify
-            self.modify_bus_window = tk.Toplevel(self.root)
-            self.modify_bus_window.title("Modify Bus")
+    def modify_bus(self):
+        # Open a new window to select the bus to modify
+        self.modify_bus_window = tk.Toplevel(self.root)
+        self.modify_bus_window.title("Modify Bus")
 
-            # Get list of buses from the database
-            connection = db_connection()
-            cursor = connection.cursor()
-            cursor.execute("SELECT bus_id, bus_name FROM buses")
-            buses = cursor.fetchall()
-            connection.close()
+        # Get list of buses from the database
+        connection = db_connection()
+        cursor = connection.cursor()
+        cursor.execute("SELECT bus_id, bus_name FROM buses")
+        buses = cursor.fetchall()
+        connection.close()
 
-            # Create a listbox to show buses
-            self.bus_listbox = tk.Listbox(self.modify_bus_window, width=50, height=10)
-            for bus in buses:
-                self.bus_listbox.insert(tk.END, f"ID: {bus[0]}, {bus[1]}")
-            self.bus_listbox.pack(pady=5)
+        # Create a listbox to show buses
+        self.bus_listbox = tk.Listbox(self.modify_bus_window, width=50, height=10)
+        for bus in buses:
+            self.bus_listbox.insert(tk.END, f"ID: {bus[0]}, {bus[1]}")
+        self.bus_listbox.pack(pady=5)
 
-            # Modify button
-            modify_button = tk.Button(self.modify_bus_window, text="Modify Selected Bus", command=self.show_modify_fields)
-            modify_button.pack(pady=5)
+        # Modify button
+        modify_button = tk.Button(self.modify_bus_window, text="Modify Selected Bus", command=self.show_modify_fields)
+        modify_button.pack(pady=5)
 
     def show_modify_fields(self):
         # Get the selected bus from the listbox
@@ -479,9 +579,9 @@ class BusTicketApp:
         self.modify_details_window.destroy()  # Close the modify bus window
         self.show_admin_dashboard()  # Refresh admin dashboard or bus list
 
-        def clear_page(self):
-            for widget in self.root.winfo_children():
-                widget.destroy()
+    def clear_page(self):
+        for widget in self.root.winfo_children():
+            widget.destroy()
 
 if __name__ == "__main__":
     root = tk.Tk()
