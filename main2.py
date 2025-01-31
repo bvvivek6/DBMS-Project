@@ -515,33 +515,27 @@ class BusTicketApp:
             messagebox.showerror("Error", f"An error occurred: {e}")
 
 
-
-
-
     def modify_bus(self):
         # Open a new window to select the bus to modify
         self.modify_bus_window = tk.Toplevel(self.root)
         self.modify_bus_window.title("Modify Bus")
-        self.modify_bus_window.configure(bg="#f7f7f7")  # Light background color for the window
-
-        # Get list of buses from the database
+        self.modify_bus_window.configure(bg="#f7f7f7")  
+ 
         connection = db_connection()
         cursor = connection.cursor()
         cursor.execute("SELECT bus_id, bus_name FROM buses")
         buses = cursor.fetchall()
         connection.close()
 
-        # Create a frame to organize widgets
+       
         frame = tk.Frame(self.modify_bus_window, padx=20, pady=20, bg="#f7f7f7")
         frame.pack(padx=10, pady=10)
 
-        # Create a listbox to show buses
         self.bus_listbox = tk.Listbox(frame, width=50, height=10, font=("Arial", 12), selectmode=tk.SINGLE)
         for bus in buses:
             self.bus_listbox.insert(tk.END, f"ID: {bus[0]}, {bus[1]}")
         self.bus_listbox.pack(pady=10)
 
-        # Modify button
         modify_button = tk.Button(frame, text="Modify Selected Bus", command=self.show_modify_fields, 
                                   font=("Arial", 12, "bold"), bg="#4CAF50", fg="white", relief="flat", width=20, height=2)
         modify_button.pack(pady=10)
